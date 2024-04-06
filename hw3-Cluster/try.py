@@ -1,17 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 from scipy.cluster.hierarchy import dendrogram
 from scipy.cluster.hierarchy import linkage
+from scipy.spatial.distance import squareform
 
 class HierarchicalClustering:
-    def __init__(self, n_clusters=2, linkage='single'):
+    def __init__(self, n_clusters=2, linkage='single', distance_method='Euclidean'):
         self.n_clusters = n_clusters  # 期望分成的簇的个数
         self.linkage = linkage        # 链接方式选择
+        self.distance_method=distance_method #距离计算方法
         self.cluster_points = []  # 初始化簇
         self.distances_dict = {}  # 初始化距离矩阵字典
-        self.link=[]
+        self.link=[]              #链接矩阵
+        self.time=0
     
     def fit(self, X):
+        start_time = time.time()
         n_samples, _ = X.shape
         self.labels_ = np.zeros(n_samples)
         
@@ -25,7 +30,9 @@ class HierarchicalClustering:
             for j in range(n_samples):
                 distances[i][j] = self.calculate_distance(X[i], X[j])
         # print(distances)
-        self.link = linkage(distances, method='single')  # 此处的distances是您计算的距离矩阵
+        # 将距离矩阵转换为压缩形式
+        condensed_distances = squareform(distances)
+        self.link = linkage(condensed_distances, method=self.linkage)  # 此处的distances是您计算的距离矩阵
         
         #进行聚类
         for _ in range(n_samples - self.n_clusters):
@@ -42,7 +49,7 @@ class HierarchicalClustering:
             self.cluster_points[min_i].extend(self.cluster_points[min_j])  # 将第min_j行合并到上面的min_i
             del self.cluster_points[min_j]  # 然后将min_j行删掉
 
-            print(self.cluster_points)
+            # print(self.cluster_points)
             
             # 更新距离字典
             for i in range(n_samples):
@@ -63,16 +70,22 @@ class HierarchicalClustering:
         
         # 根据簇的合并情况得到最终的标签
         self.labels_ = self.get_labels(self.distances_dict)
+        # 对每个簇中的ID进行排序
+        for i in range(len(self.cluster_points)):
+            self.cluster_points[i].sort()
 
+        end_time = time.time()
+        self.time = end_time - start_time
+        
         return self.cluster_points
 
     # 运用距离公式计算距离   
     def calculate_distance(self, x1, x2):
-        if self.linkage == 'single':
+        if self.distance_method == 'Manhattan':
             return np.linalg.norm(x1 - x2, ord=1)  # 曼哈顿距离
-        elif self.linkage == 'complete':
+        elif self.distance_method == 'Chebyshev':
             return np.linalg.norm(x1 - x2, ord=np.inf)  # 切比雪夫距离
-        elif self.linkage == 'average':
+        elif self.distance_method == 'Euclidean':
             return np.linalg.norm(x1 - x2)  #欧氏距离
     
     def get_labels(self, distances_dict):
@@ -102,27 +115,20 @@ class HierarchicalClustering:
         return labels.astype(int)
 
     # 聚类结果可视化
-    def plot_clusters(self,X):
+    def plot_clusters(self, X,x_label,y_label,title):
         colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-        fig, axs = plt.subplots(1, 2, figsize=(15, 6))
-    
+        fig, ax = plt.subplots(1, 1, figsize=(8, 6))  # 创建一个子图
+
         # 绘制聚类结果散点图
         for i, cluster in enumerate(self.cluster_points):
             cluster_color = colors[i % len(colors)]
             cluster_data = X[cluster]
-            axs[0].scatter(cluster_data[:, 0], cluster_data[:, 1], c=cluster_color, label=f'Cluster {i}')
-        axs[0].legend()
-        axs[0].set_xlabel('X')
-        axs[0].set_ylabel('Y')
-        axs[0].set_title('Clustered Data')
+            ax.scatter(cluster_data[:, 0], cluster_data[:, 1], c=cluster_color, label=f'Cluster {i}')
+        ax.legend()
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_title(title)
 
-        # 绘制树状图
-        dendrogram(self.link, ax=axs[1])
-        axs[1].set_xlabel('Sample Index')
-        axs[1].set_ylabel('Distance')
-        axs[1].set_title('Hierarchical Clustering Dendrogram')
-
-        plt.tight_layout()
         plt.show()
 
 # 测试算法
@@ -139,6 +145,6 @@ print(cluster1)
 print(cluster2)
 print(cluster3)
 
-model_single.plot_clusters(X_t)
-model_complete.plot_clusters(X_t)
-model_average.plot_clusters(X_t)
+model_single.plot_clusters(X_t,"X","Y","Cluster-single")
+model_complete.plot_clusters(X_t,"X","Y","Cluster-complete")
+model_average.plot_clusters(X_t,"X","Y","Cluster-average")
