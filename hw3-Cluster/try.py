@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram
+from scipy.cluster.hierarchy import linkage
 
 class HierarchicalClustering:
     def __init__(self, n_clusters=2, linkage='single'):
@@ -7,6 +9,7 @@ class HierarchicalClustering:
         self.linkage = linkage        # 链接方式选择
         self.cluster_points = []  # 初始化簇
         self.distances_dict = {}  # 初始化距离矩阵字典
+        self.link=[]
     
     def fit(self, X):
         n_samples, _ = X.shape
@@ -22,7 +25,8 @@ class HierarchicalClustering:
             for j in range(n_samples):
                 distances[i][j] = self.calculate_distance(X[i], X[j])
         # print(distances)
-
+        self.link = linkage(distances, method='single')  # 此处的distances是您计算的距离矩阵
+        
         #进行聚类
         for _ in range(n_samples - self.n_clusters):
 
@@ -38,7 +42,7 @@ class HierarchicalClustering:
             self.cluster_points[min_i].extend(self.cluster_points[min_j])  # 将第min_j行合并到上面的min_i
             del self.cluster_points[min_j]  # 然后将min_j行删掉
 
-            # print(self.cluster_points)
+            print(self.cluster_points)
             
             # 更新距离字典
             for i in range(n_samples):
@@ -100,17 +104,25 @@ class HierarchicalClustering:
     # 聚类结果可视化
     def plot_clusters(self,X):
         colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-        fig, ax = plt.subplots()
+        fig, axs = plt.subplots(1, 2, figsize=(15, 6))
     
+        # 绘制聚类结果散点图
         for i, cluster in enumerate(self.cluster_points):
             cluster_color = colors[i % len(colors)]
             cluster_data = X[cluster]
-            ax.scatter(cluster_data[:, 0], cluster_data[:, 1], c=cluster_color, label=f'Cluster {i}')
+            axs[0].scatter(cluster_data[:, 0], cluster_data[:, 1], c=cluster_color, label=f'Cluster {i}')
+        axs[0].legend()
+        axs[0].set_xlabel('X')
+        axs[0].set_ylabel('Y')
+        axs[0].set_title('Clustered Data')
 
-        ax.legend()
-        ax.set_xlabel('X')
-        ax.set_ylabel('Y')
-        ax.set_title('Clustered Data')
+        # 绘制树状图
+        dendrogram(self.link, ax=axs[1])
+        axs[1].set_xlabel('Sample Index')
+        axs[1].set_ylabel('Distance')
+        axs[1].set_title('Hierarchical Clustering Dendrogram')
+
+        plt.tight_layout()
         plt.show()
 
 # 测试算法
