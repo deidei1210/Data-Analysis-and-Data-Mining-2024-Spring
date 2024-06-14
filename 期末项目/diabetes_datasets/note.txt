@@ -1,0 +1,11 @@
+This version is to add 188 CGM measurements on ShanghaiT2DM. 
+In the "Shanghai_T2DM" folder, the file "2003_0_20210615" has extended rows from 586 to 670, with rows from 587 to 670 newly added.
+
+In the "Shanghai_T2DM" folder, the file "2029_0_20210526" has extended rows from 742 to 846 with rows from 743 to 846 newly added. From line 743 to 755, the CGM values are missing because the CGM device has been changed to a new one. The readings of the new CGM device started from 2021/6/3 12:46.
+
+
+“Shanghai_T2DM”文件夹中的“2003_0_20210615”文件从586行增加到670行，587~670行为新增数据
+“Shanghai_T2DM”文件夹中的“2029_0_20210526”文件从742行增加到846行，743~846行为新增数据
+
+
+2023/10/26
